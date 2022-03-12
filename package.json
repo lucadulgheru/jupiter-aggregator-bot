@@ -1,6 +1,6 @@
 {
-  "name": "jupiter-core-example",
-  "version": "1.0.0",
+  "name": "jupiter-aggregator-bot",
+  "version": "1.1.0",
   "description": "",
   "source": "src/index.ts",
   "main": "dist/main.js",

@@ -181,10 +181,11 @@ const main = async () => {
             }
             console.log("🏁   Swap route: " + swapChain);
             console.log("🤑   Total profit: ", profit);
-            console.log(bestRoute);
-            if (profit >= 0.5) {
-              executeSwap({ jupiter, route: bestRoute });
-              await new Promise(r => setTimeout(r, 1000));
+            // console.log(bestRoute);
+            if (profit >= 0.2) {
+              console.log("💵   Executing swap.");
+              await executeSwap({ jupiter, route: bestRoute });
+              //await new Promise(r => setTimeout(r, 1000));
             }
           }
 
@@ -193,7 +194,7 @@ const main = async () => {
     } catch (error) {
       console.log({ error });
     }
-    await new Promise(r => setTimeout(r, 2000));
+    // await new Promise(r => setTimeout(r, 1000));
   }
 }
 
