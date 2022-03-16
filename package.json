@@ -15,7 +15,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@jup-ag/core": "^1.0.0-beta.11",
+    "@jup-ag/core": "^1.0.0-beta.18",
     "@solana/spl-token-registry": "^0.2.2079",
     "@solana/wallet-adapter-base": "^0.9.3",
     "@solana/web3.js": "^1.33.0",

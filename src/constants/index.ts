@@ -10,6 +10,8 @@ export const SOLANA_RPC_ENDPOINT = ENV === "devnet"
     ? 'https://api.devnet.solana.com'
     : "https://solana-api.projectserum.com";
 
+export const GENESYS_GO_RPC_ENDPOINT = 'https://ssc-dao.genesysgo.net';
+
 // Wallets
 export const WALLET_PRIVATE_KEY = process.env.WALLET_PRIVATE_KEY || "PASTE YOUR WALLET PRIVATE KEY";
 export const USER_PRIVATE_KEY = bs58.decode(WALLET_PRIVATE_KEY);
@@ -17,7 +19,7 @@ export const USER_KEYPAIR = Keypair.fromSecretKey(USER_PRIVATE_KEY);
 
 // Maximum value we should be looking for at each coin
 export const INPUT_AMOUNTS: any = {
-    "USDC" : 50,
+    // "USDC" : 50,
     // "SOL" : 1,
     // "UST" : 100,
     // "USDT" : 100,
