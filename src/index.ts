@@ -5,6 +5,7 @@ import { Jupiter, RouteInfo, TOKEN_LIST_URL } from "@jup-ag/core";
 import {
   ENV,
   SOLANA_RPC_ENDPOINT,
+  QUICKNODE_RPC_ENDPOINT,
   Token,
   USER_KEYPAIR,
 } from "./constants";
@@ -42,6 +43,10 @@ function getTokenSymbolFromMint(tokenList: any, mintAddress: string): string {
   }
 }
 
+function calculateProfitableTrade(inputAmount: number, receivedAmount: number, profitTarget: number): boolean {
+  return (receivedAmount - inputAmount >= profitTarget) ? true : false;
+}
+
 const getRoutes = async ({
   jupiter,
   inputToken,
@@ -60,9 +65,7 @@ const getRoutes = async ({
       return null;
     }
 
-    const inputAmountLamports = inputToken
-      ? Math.round(inputAmount * 10 ** inputToken.decimals)
-      : 0; // Lamports based on token decimals
+    const inputAmountLamports = inputToken ? Math.round(inputAmount * 10 ** inputToken.decimals) : 0;
 
     var routes;
 
@@ -82,10 +85,6 @@ const getRoutes = async ({
     catch (e) {
     }
     if (routes && routes.routesInfos) {
-      var marketChain = "";
-      routes.routesInfos[0].marketInfos.forEach(
-        marketInfo => marketChain += marketInfo.marketMeta.amm.label + 'x'
-      );
       return routes;
     } else {
       return null;
@@ -103,12 +102,10 @@ const executeSwap = async ({
   route: RouteInfo;
 }) => {
   try {
-    // Prepare execute exchange
     const { execute } = await jupiter.exchange({
       routeInfo: route,
     });
-    // Execute swap
-    const swapResult: any = await execute(); // Force any to ignore TS misidentifying SwapResult type
+    const swapResult: any = await execute();
 
     if (swapResult.error) {
       console.log(swapResult.error);
@@ -129,7 +126,7 @@ const executeSwap = async ({
 const main = async () => {
 
   console.log("📡   Establishing connection to RPC Endpoint\n\n");
-  const connection = new Connection(SOLANA_RPC_ENDPOINT);
+  const connection = new Connection(QUICKNODE_RPC_ENDPOINT);
 
   console.log("🪙   Fetching token list from Jupiter\n\n");
   const tokens: Token[] = await (await fetch(TOKEN_LIST_URL[ENV])).json();
@@ -142,7 +139,7 @@ const main = async () => {
     user: USER_KEYPAIR,
   });
 
-  if(process.argv.length !== 4){
+  if (process.argv.length !== 4) {
     console.log('Script usage: npm start TOKEN AMOUNT');
     return 1;
   }
@@ -157,47 +154,35 @@ const main = async () => {
 
   while (1) {
     try {
+
+      const beforeRoutes = new Date();
+
       const inputToken = selectedToken;
       const outputToken = inputToken;
       const routes = await getRoutes({
         jupiter,
         inputToken,
         outputToken,
-        inputAmount: amount, // 1 unit in UI
-        slippage: 0.5, // 0.5% slippage
+        inputAmount: amount,
+        slippage: 0,
       });
 
       if (routes) {
         const bestRoute = routes.routesInfos[0];
-        var swapChain = "";
-
         const tokenQuote = readableAmount(bestRoute.outAmount, inputToken.decimals);
-        const ourInput = readableAmount(bestRoute.inAmount, inputToken!.decimals);
-
-        if (inputToken && tokenQuote && ourInput && (ourInput < tokenQuote)) {
-          console.log("🚀   Found possible good swap for token: ", inputToken.symbol);
-
-          const profit = tokenQuote - ourInput;
-
-          for (var j = 0; j < bestRoute.marketInfos.length; j++) {
-            swapChain += getTokenSymbolFromMint(tokens, bestRoute.marketInfos[j].inputMint.toString()) + " -> " +
-              getTokenSymbolFromMint(tokens, bestRoute.marketInfos[j].outputMint.toString()) + " | ";
-          }
-          console.log("🏁   Swap route: " + swapChain);
-          console.log("🤑   Total profit: ", profit);
-
-          if (profit >= 0.2) {
-            console.log("💵   Executing swap.");
-            await executeSwap({ jupiter, route: bestRoute });
-            await new Promise(r => setTimeout(r, 1000));
-          }
+        if (calculateProfitableTrade(amount, tokenQuote, 0.1)) {
+          console.log("💵   Executing swap.");
+          await executeSwap({ jupiter, route: bestRoute });
+          await new Promise(r => setTimeout(r, 1000));
         }
-
       }
+
+      console.log('After calculating routes: ' + (+new Date() - +beforeRoutes) / 1000.0 + ' seconds');
+
     } catch (error) {
-      console.log({ error });
+      // console.log({ error });
     }
-    await new Promise(r => setTimeout(r, 1000));
+    // await new Promise(r => setTimeout(r, 1000));
   }
 }
 
